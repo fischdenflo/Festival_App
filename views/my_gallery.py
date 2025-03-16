@@ -1,9 +1,15 @@
 import streamlit as st
-from config import BASE_URL, COLLECTION
 from connection.poketbase import PocketBaseClient
 from views.login import login_page
 
-client = PocketBaseClient(BASE_URL, COLLECTION)
+# Initialisiere den PocketBase-Client für Datenbankoperationen mit Admin-Rechten
+client = PocketBaseClient(
+    base_url=st.secrets["pocketbase"]["base_url"],
+    collection=st.secrets["pocketbase"]["collection"],
+    email=st.secrets["pocketbase"]["admin"]["email"],
+    password=st.secrets["pocketbase"]["admin"]["password"],
+    is_admin=True
+)
 
 def my_gallery_page(cookies):
     

@@ -3,12 +3,11 @@ from views.my_gallery import my_gallery_page
 from views.upload import upload_page
 from views.voting import voting_page
 from streamlit_cookies_manager import EncryptedCookieManager
-from config import SECRET
 
 # Cookie-Manager initialisieren
 cookies = EncryptedCookieManager(
     prefix="festival",  # Präfix für alle Cookie-Namen
-    password=SECRET     # Passwort für die Verschlüsselung
+    password=st.secrets["pocketbase"]["secret"]     # Passwort für die Verschlüsselung
 )
 
 def upload_page_wrapper():

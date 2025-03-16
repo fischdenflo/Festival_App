@@ -1,6 +1,4 @@
 import streamlit as st
-from streamlit_cookies_manager import EncryptedCookieManager
-from config import SECRET
 
 
 def login_page(cookies):
@@ -11,7 +9,6 @@ def login_page(cookies):
     
     if st.button("Login"):
         if user:
-            
             # Cookies setzen (7 Tage gültig)
             cookies["user_logged_in"] = "true"
             cookies["username"] = user
