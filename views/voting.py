@@ -7,7 +7,7 @@ client = PocketBaseClient(BASE_URL, COLLECTION)
 
 def voting_page(cookies):
     
-     # Warten, bis die Cookies geladen sind
+    # Warten, bis die Cookies geladen sind
     if not cookies.ready():
         st.warning("Lade Cookies...")
         st.stop()
@@ -28,8 +28,28 @@ def voting_page(cookies):
             st.info("Es wurden noch keine Bilder hochgeladen.")
         else:
             for record in records:
-                if record.get("image"):
-                    image_url = client.get_file_url(record['id'], record['image'][0])
-                    st.image(image_url)
+                with st.container(border=True):
+                    
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        # Alle Bilder des Records anzeigen, sofern vorhanden.
+                        if record.get("image"):
+                            image_urls = []
+                            for image_file in record.get("image"):
+                                image_url = client.get_file_url(record['id'], image_file)
+                                image_urls.append(image_url)
+                            st.image(image_urls, width=200)
+                                
+                        else:
+                            st.info("Keine Bilder für diesen Eintrag vorhanden.")    
+                            
+                    with col2:               
+                        # Name des Records anzeigen. Passe 'name' an den tatsächlichen Feldnamen an, falls anders.
+                        record_name = record.get("user")
+                        st.title(f"**{record_name}**")
+                
+                    
+
     else:
         st.error(f"Fehler beim Abrufen der Bilder: {response.text}")
