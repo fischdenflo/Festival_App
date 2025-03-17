@@ -5,10 +5,7 @@ insgesamt maximal 5 Stimmen abgeben kann und für jedes Bild nur einmal abstimme
 """
 
 import streamlit as st
-import random
-import time
 from datetime import datetime, timezone
-import pytz
 from views.login import login_page
 from connection.poketbase import PocketBaseClient
 
@@ -32,12 +29,11 @@ def count_user_votes(records, username):
     Returns:
         int: Anzahl der bereits abgegebenen Stimmen des Benutzers
     """
-    total_votes = 0
-    for record in records:
-        voted_users = record.get("voted_users", []) or []
-        if username in voted_users:
-            total_votes += 1
-    return total_votes
+    # Optimierte Version: Nutze filter in der Datenbankabfrage
+    response = client.get_records(filter=f'voted_users ?~ "{username}"')
+    if response.status_code == 200:
+        return len(response.json().get("items", []))
+    return 0
 
 def voting_page(cookies):
     """
@@ -63,6 +59,11 @@ def voting_page(cookies):
     
     st.title("Voting")
     
+    # Hole die Anzahl der bereits abgegebenen Stimmen
+    user_total_votes = count_user_votes(None, user)
+    remaining_votes = 5 - user_total_votes
+    st.info(f"Sie haben noch {remaining_votes} Stimmen übrig.")
+    
     # Hole alle Bild-Records aus der Datenbank
     response = client.get_records()
     if response.status_code == 200:
@@ -72,11 +73,6 @@ def voting_page(cookies):
         if not records:
             st.info("Es wurden noch keine Bilder hochgeladen.")
         else:
-            # Berechne und zeige die verbleibenden Stimmen des Users an
-            user_total_votes = count_user_votes(records, user)
-            remaining_votes = 5 - user_total_votes
-            st.info(f"Sie haben noch {remaining_votes} Stimmen übrig.")
-            
             # Zeige alle Bilder mit Voting-Möglichkeit an
             for record in records:
                 with st.container(border=True):
@@ -102,23 +98,19 @@ def voting_page(cookies):
                         st.title(f"**{record_name}**")
                         
                         # Voting-System
-                        votes = record.get("votes", 0)
-                        st.write(f"Aktuelle Stimmen: {votes}")
-                        
-                        # Prüfe die Voting-Berechtigung des Users
                         voted_users = record.get("voted_users", []) or []  # Stelle sicher, dass es eine Liste ist
+                        votes = len(voted_users)  # Anzahl der Stimmen ist die Länge der voted_users-Liste
+                        st.write(f"Aktuelle Stimmen: {votes}")
                         
                         if user not in voted_users:
                             # Prüfe ob noch Stimmen übrig sind
                             if remaining_votes > 0:
                                 if st.button("👍 Abstimmen", key=f"vote_{record['id']}"):
-                                    # Aktualisiere die Stimmen und die Liste der User
-                                    new_votes = votes + 1
+                                    # Füge den User zur Liste der Abstimmenden hinzu
                                     voted_users.append(user)
                                     
                                     # Bereite Daten für das Update vor
                                     update_data = {
-                                        "votes": new_votes,
                                         "voted_users": voted_users
                                     }
                                     
